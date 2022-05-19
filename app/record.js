@@ -1,80 +1,89 @@
+import * as sub from "./submit.js";
 // This array stores the recorded media data
 let chunks = [];
-
-const audioMediaConstraints = {
-	audio: true,
-	video: false,
-};
+const duration = 5;
 
 const videoMediaConstraints = {
-	audio: true,
-	video: true,
+  facingMode: 'environment',
+  audio: true,
+  video: true,
+};
+
+let camera = document.getElementById("camera");
+let playback = document.getElementById("playback");
+let strap = document.getElementById("strap");
+
+let playbackTime;
+playback.ontimeupdate = (e) => {
+  let pt = playbackTime.add(parseInt(playback.currentTime, 10), 's');
+  strap.textContent = pt.format('YYYY-MM-DD HH:MM:ss');
 };
 
 // When the user clicks the "Start // Recording" button this function // gets invoked
-async function startRecording() {
+export async function startRecording() {
 
-  let selectedMedia = "vid";
-	// Access the camera and microphone
-	let mediaStream = await navigator.mediaDevices.getUserMedia(videoMediaConstraints);
-
+  playback.style.display = "none";
+  camera.style.display = "block";
+  // Access the camera and microphone
+  let mediaStream = await navigator.mediaDevices.getUserMedia(videoMediaConstraints);
   // Create a new MediaRecorder instance
   const mediaRecorder = new MediaRecorder(mediaStream);
 
-  mediaRecorder.start();
+  let startTime = dayjs().format('YYYY-MM-DD HH:MM:ss');
+  strap.textContent = "🔴 " + startTime;
+  chunks = [startTime];
+  mediaRecorder.start(1000);
 
   mediaRecorder.ondataavailable = (e) => {
+    strap.textContent = "🔴 " + dayjs().format('YYYY-MM-DD HH:MM:ss');
+
     chunks.push(e.data);
+    if (chunks.length == duration) {
+      mediaRecorder.stop();
+      mediaStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+    }
   };
 
-  mediaRecorder.onstop = () => {
-
-    const blob = new Blob(
-      chunks, {
-        type: selectedMedia === "vid" ?  "video/mp4" : "audio/mpeg"
-      });
-    chunks = [];
-
-    // Create a video or audio element
-    // that stores the recorded media
-    const recordedMedia = document.createElement(selectedMedia === "vid" ? "video" : "audio");
-    recordedMedia.controls = true;
-
-    // You can not directly set the blob as
-    // the source of the video or audio element
-    // Instead, you need to create a URL for blob
-    // using URL.createObjectURL() method.
-    const recordedMediaURL = URL.createObjectURL(blob);
-
-    // Now you can use the created URL as the
-    // source of the video or audio element
-    recordedMedia.src = recordedMediaURL;
-
-
-    //URL.revokeObjectURL(recordedMedia);
-  }
-
-  if (selectedMedia === "vid") {
-    // Remember to use the srcObject
-    // attribute since the src attribute
-    // doesn't support media stream as a value
-    webCamContainer.srcObject = mediaStream;
-  }
-
+  mediaRecorder.onstop = submitVideo;
+  camera.srcObject = mediaStream;
 }
 
-function stopRecording(thisButton, otherButton) {
+async function submitVideo() {
+  strap.textContent = '';
 
-	// Stop the recording
-	window.mediaRecorder.stop();
+  const blob = new Blob(
+    chunks, {
+      type: "video/mp4"
+    });
+  chunks = [];
 
-	// Stop all the tracks in the
-	// received media stream
-	window.mediaStream.getTracks().forEach((track) => {
-		track.stop();
-	});
+  // Get the video data returned.
+  let ds = await sub.getVideo(blob);
 
-	document.getElementById( `${selectedMedia}-record-status`) .innerText = "Recording done!";
-	thisButton.disabled = true;
-	otherButton.disabled = false;
+  // Extract the date from the video data.
+  let dt = await ds.slice(0,19).text();
+  playbackTime = dayjs(dt, "YYYY-MM-DD HH:MM:ss");
+  strap.textContent = playbackTime.format('YYYY-MM-DD HH:MM:ss');
+
+  // Video data starts at this position.
+  let video = ds.slice(19)
+
+  // You can not directly set the blob as
+  // the source of the video or audio element
+  // Instead, you need to create a URL for blob
+  // using URL.createObjectURL() method.
+  const recordedMediaURL = URL.createObjectURL(video);
+
+  // Now you can use the created URL as the
+  // source of the video or audio element
+  playback.style.display = "block";
+  camera.style.display = "none";
+  playback.src = recordedMediaURL;
+  try {
+    playback.play();
+  } catch(e) {
+    console.log("Error playing: ", e);
+  }
 }

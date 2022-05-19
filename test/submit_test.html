@@ -3,7 +3,7 @@ import * as sub from "../app/submit.js";
 
 function testSubmit() {
   for (var i = 0; i < 200; i++) {
-    sub.getVideo("fdsjklfdsjkl" + i); 
+    sub.getVideo(new Blob(["fdsjklfdsjkl" + i], {type: 'video/mp4'})); 
   }
   //console.log(chunker.next() == sa[1] ? '.' : 'FAIL : (chunker.next() == sa[1]');
 
