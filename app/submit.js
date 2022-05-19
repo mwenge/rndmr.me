@@ -1,5 +1,6 @@
 
-const url = "https://192.168.192.24:8080/video";
+//const url = "https://192.168.192.24:8080/video";
+const url = "https://dirtylittlepipeline.com:8080/video";
 
 export async function getVideo(blob) {
   let result = await makeRequest("POST", url, blob);
