@@ -11,4 +11,7 @@ camera.onclick = ()=> {
 playback.onclick = ()=> {
   rec.startRecording();
 };
+interstitial.onclick = ()=> {
+  rec.startRecording();
+};
 

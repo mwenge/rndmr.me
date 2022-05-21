@@ -1,12 +1,11 @@
 import * as sub from "./submit.js";
 // This array stores the recorded media data
 let chunks = [];
-const duration = 5;
+const duration = 10;
 
 const videoMediaConstraints = {
-  facingMode: 'environment',
   audio: true,
-  video: true,
+  video: { facingMode: "environment" },
 };
 
 let camera = document.getElementById("camera");
@@ -19,15 +18,45 @@ playback.ontimeupdate = (e) => {
   strap.textContent = pt.format('YYYY-MM-DD HH:MM:ss');
 };
 
+let canStart = true;
+function startingRecording() {
+  canStart = false;
+  intertext.textContent = "STRTING";
+}
+function recordingStarted() {
+  playback.style.display = "none";
+  interstitial.style.display = "none";
+  camera.style.display = "block";
+  intertext.textContent = "PLS RNDM";
+}
+function recordingStopped() {
+  playback.style.display = "none";
+  interstitial.style.display = "block";
+  camera.style.display = "none";
+  intertext.textContent = "gtng rndmr";
+}
+function playbackReady() {
+  playback.style.display = "block";
+  interstitial.style.display = "none";
+  camera.style.display = "none";
+}
+function playbackEnded() {
+  playback.style.display = "none";
+  interstitial.style.display = "block";
+  camera.style.display = "none";
+  intertext.textContent = "rndmr rdy";
+  canStart = true;
+}
 // When the user clicks the "Start // Recording" button this function // gets invoked
 export async function startRecording() {
+  if (!canStart) return;
 
-  playback.style.display = "none";
-  camera.style.display = "block";
+  startingRecording();
   // Access the camera and microphone
   let mediaStream = await navigator.mediaDevices.getUserMedia(videoMediaConstraints);
   // Create a new MediaRecorder instance
   const mediaRecorder = new MediaRecorder(mediaStream);
+  mediaRecorder.onstart = recordingStarted;
 
   let startTime = dayjs().format('YYYY-MM-DD HH:MM:ss');
   strap.textContent = "🔴 " + startTime;
@@ -51,8 +80,10 @@ export async function startRecording() {
 }
 
 async function submitVideo() {
+  recordingStopped();
   strap.textContent = '';
 
+  interstitial.style.display = "block";
   const blob = new Blob(
     chunks, {
       type: "video/mp4"
@@ -75,12 +106,14 @@ async function submitVideo() {
   // Instead, you need to create a URL for blob
   // using URL.createObjectURL() method.
   const recordedMediaURL = URL.createObjectURL(video);
+  playbackReady();
 
   // Now you can use the created URL as the
   // source of the video or audio element
   playback.style.display = "block";
   camera.style.display = "none";
   playback.src = recordedMediaURL;
+  playback.onended = playbackEnded;
   try {
     playback.play();
   } catch(e) {
