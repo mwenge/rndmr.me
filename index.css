@@ -36,6 +36,7 @@ html,body {
   color: yellow;
   text-shadow: 1px 1px 1px black;
   text-transform: uppercase;
+  filter: blur(0.7px);
 }
 .intertext {
 	position: absolute;

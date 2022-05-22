@@ -5,13 +5,20 @@ const mediaSelector = document.getElementById("media");
 const camera = document.getElementById("camera");
 const playback = document.getElementById("playback");
 
+async function startRecording() {
+  try {
+    await rec.startRecording();
+  } catch(e) {
+    intertext.textContent = "ERR NO CAMRA";
+  }
+}
 camera.onclick = ()=> {
-  rec.startRecording();
+  startRecording();
 };
 playback.onclick = ()=> {
-  rec.startRecording();
+  startRecording();
 };
 interstitial.onclick = ()=> {
-  rec.startRecording();
+  startRecording();
 };
 
